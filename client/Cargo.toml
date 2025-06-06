@@ -1,0 +1,27 @@
+[package]
+name = "networkgpu-client"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+networkgpu-proto = { path = "../proto" }
+tokio = { workspace = true }
+tonic = { workspace = true }
+prost = { workspace = true }
+serde = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+log = { workspace = true }
+uuid = { workspace = true }
+futures = { workspace = true }
+async-trait = { workspace = true }
+
+# Additional dependencies
+dashmap = "5.4"
+parking_lot = "0.12"
+bytes = "1.0"
+config = "0.13"
+tower = "0.4"
+lru = "0.12"
+fastrand = "2.0"
+tokio-stream = "0.1"

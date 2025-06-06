@@ -1,0 +1,400 @@
+syntax = "proto3";
+
+package networkgpu.v1;
+
+// Main NetworkGPU service for remote GPU operations
+service NetworkGPUService {
+  // Device management operations
+  rpc GetDeviceInfo(GetDeviceInfoRequest) returns (GetDeviceInfoResponse);
+  rpc ListDevices(ListDevicesRequest) returns (ListDevicesResponse);
+  rpc AllocateDevice(AllocateDeviceRequest) returns (AllocateDeviceResponse);
+  rpc ReleaseDevice(ReleaseDeviceRequest) returns (ReleaseDeviceResponse);
+  
+  // Memory management operations
+  rpc AllocateMemory(AllocateMemoryRequest) returns (AllocateMemoryResponse);
+  rpc DeallocateMemory(DeallocateMemoryRequest) returns (DeallocateMemoryResponse);
+  rpc MemoryCopy(stream MemoryCopyRequest) returns (stream MemoryCopyResponse);
+  rpc MemorySet(MemorySetRequest) returns (MemorySetResponse);
+  
+  // Compute operations
+  rpc LaunchKernel(LaunchKernelRequest) returns (LaunchKernelResponse);
+  rpc SynchronizeDevice(SynchronizeDeviceRequest) returns (SynchronizeDeviceResponse);
+  rpc CreateStream(CreateStreamRequest) returns (CreateStreamResponse);
+  rpc DestroyStream(DestroyStreamRequest) returns (DestroyStreamResponse);
+  
+  // Tensor operations
+  rpc CreateTensor(CreateTensorRequest) returns (CreateTensorResponse);
+  rpc DestroyTensor(DestroyTensorRequest) returns (DestroyTensorResponse);
+  rpc TensorOperation(TensorOperationRequest) returns (TensorOperationResponse);
+  rpc GetTensorData(GetTensorDataRequest) returns (stream TensorDataChunk);
+  rpc SetTensorData(stream TensorDataChunk) returns (SetTensorDataResponse);
+  
+  // Health and status
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+  rpc GetServerStats(GetServerStatsRequest) returns (GetServerStatsResponse);
+}
+
+// Device information and properties
+message DeviceInfo {
+  int32 device_id = 1;
+  string name = 2;
+  uint64 total_memory = 3;
+  uint64 free_memory = 4;
+  int32 compute_capability_major = 5;
+  int32 compute_capability_minor = 6;
+  int32 multiprocessor_count = 7;
+  int32 max_threads_per_block = 8;
+  int32 max_block_dim_x = 9;
+  int32 max_block_dim_y = 10;
+  int32 max_block_dim_z = 11;
+  int32 max_grid_dim_x = 12;
+  int32 max_grid_dim_y = 13;
+  int32 max_grid_dim_z = 14;
+  int32 warp_size = 15;
+  uint64 max_pitch = 16;
+  int32 max_threads_per_multiprocessor = 17;
+  int32 clock_rate = 18;
+  uint64 texture_alignment = 19;
+  bool concurrent_kernels = 20;
+  bool ecc_enabled = 21;
+  int32 pci_bus_id = 22;
+  int32 pci_device_id = 23;
+  string uuid = 24;
+}
+
+// Tensor descriptor for remote tensors
+message TensorDescriptor {
+  string tensor_id = 1;
+  repeated int64 shape = 2;
+  string dtype = 3;
+  bool requires_grad = 4;
+  uint64 device_ptr = 5;
+  int32 device_id = 6;
+  uint64 size_bytes = 7;
+  repeated int64 stride = 8;
+  uint64 storage_offset = 9;
+  MemoryLayout layout = 10;
+}
+
+// Memory layout information
+message MemoryLayout {
+  bool is_contiguous = 1;
+  repeated int64 stride = 2;
+  uint64 offset = 3;
+}
+
+// Memory pointer information
+message MemoryPointer {
+  uint64 ptr = 1;
+  uint64 size = 2;
+  int32 device_id = 3;
+  string allocation_id = 4;
+  uint64 alignment = 5;
+}
+
+// Stream information
+message StreamInfo {
+  string stream_id = 1;
+  int32 device_id = 2;
+  uint32 flags = 3;
+  int32 priority = 4;
+}
+
+// Device management requests/responses
+message GetDeviceInfoRequest {
+  int32 device_id = 1;
+}
+
+message GetDeviceInfoResponse {
+  DeviceInfo device_info = 1;
+  bool success = 2;
+  string error_message = 3;
+}
+
+message ListDevicesRequest {}
+
+message ListDevicesResponse {
+  repeated DeviceInfo devices = 1;
+  bool success = 2;
+  string error_message = 3;
+}
+
+message AllocateDeviceRequest {
+  int32 device_id = 1;
+  string client_id = 2;
+  uint64 memory_limit = 3;
+}
+
+message AllocateDeviceResponse {
+  string allocation_token = 1;
+  bool success = 2;
+  string error_message = 3;
+}
+
+message ReleaseDeviceRequest {
+  string allocation_token = 1;
+}
+
+message ReleaseDeviceResponse {
+  bool success = 1;
+  string error_message = 2;
+}
+
+// Memory management requests/responses
+message AllocateMemoryRequest {
+  int32 device_id = 1;
+  uint64 size = 2;
+  uint64 alignment = 3;
+  string allocation_token = 4;
+}
+
+message AllocateMemoryResponse {
+  MemoryPointer memory_pointer = 1;
+  bool success = 2;
+  string error_message = 3;
+}
+
+message DeallocateMemoryRequest {
+  string allocation_id = 1;
+  string allocation_token = 2;
+}
+
+message DeallocateMemoryResponse {
+  bool success = 1;
+  string error_message = 2;
+}
+
+message MemoryCopyRequest {
+  oneof source {
+    uint64 device_ptr = 1;
+    bytes host_data = 2;
+  }
+  oneof destination {
+    uint64 dest_device_ptr = 3;
+    bool to_host = 4;
+  }
+  uint64 size = 5;
+  string stream_id = 6;
+  bool async_copy = 7;
+}
+
+message MemoryCopyResponse {
+  bool success = 1;
+  uint64 bytes_copied = 2;
+  string error_message = 3;
+  bytes host_data = 4; // Only set when copying to host
+}
+
+message MemorySetRequest {
+  uint64 device_ptr = 1;
+  int32 value = 2;
+  uint64 size = 3;
+  string stream_id = 4;
+}
+
+message MemorySetResponse {
+  bool success = 1;
+  string error_message = 2;
+}
+
+// Compute operation requests/responses
+message LaunchKernelRequest {
+  string kernel_name = 1;
+  bytes kernel_code = 2;
+  repeated uint64 arg_pointers = 3;
+  repeated bytes arg_values = 4;
+  GridDim grid_dim = 5;
+  BlockDim block_dim = 6;
+  uint64 shared_memory_size = 7;
+  string stream_id = 8;
+  map<string, string> compile_options = 9;
+}
+
+message LaunchKernelResponse {
+  bool success = 1;
+  string error_message = 2;
+  string kernel_id = 3;
+}
+
+message GridDim {
+  uint32 x = 1;
+  uint32 y = 2;
+  uint32 z = 3;
+}
+
+message BlockDim {
+  uint32 x = 1;
+  uint32 y = 2;
+  uint32 z = 3;
+}
+
+message SynchronizeDeviceRequest {
+  int32 device_id = 1;
+}
+
+message SynchronizeDeviceResponse {
+  bool success = 1;
+  string error_message = 2;
+}
+
+message CreateStreamRequest {
+  int32 device_id = 1;
+  uint32 flags = 2;
+  int32 priority = 3;
+}
+
+message CreateStreamResponse {
+  StreamInfo stream_info = 1;
+  bool success = 2;
+  string error_message = 3;
+}
+
+message DestroyStreamRequest {
+  string stream_id = 1;
+}
+
+message DestroyStreamResponse {
+  bool success = 1;
+  string error_message = 2;
+}
+
+// Tensor operation requests/responses
+message CreateTensorRequest {
+  repeated int64 shape = 1;
+  string dtype = 2;
+  int32 device_id = 3;
+  bool requires_grad = 4;
+  bytes initial_data = 5;
+  bool pin_memory = 6;
+}
+
+message CreateTensorResponse {
+  TensorDescriptor tensor = 1;
+  bool success = 2;
+  string error_message = 3;
+}
+
+message DestroyTensorRequest {
+  string tensor_id = 1;
+}
+
+message DestroyTensorResponse {
+  bool success = 1;
+  string error_message = 2;
+}
+
+message TensorOperationRequest {
+  TensorOpType operation = 1;
+  repeated string input_tensors = 2;
+  string output_tensor = 3;
+  map<string, TensorOpParam> parameters = 4;
+  string stream_id = 5;
+}
+
+message TensorOperationResponse {
+  bool success = 1;
+  string error_message = 2;
+  TensorDescriptor result_tensor = 3;
+}
+
+message IntArray {
+  repeated int64 values = 1;
+}
+
+message FloatArray {
+  repeated double values = 1;
+}
+
+message TensorOpParam {
+  oneof value {
+    int64 int_value = 1;
+    double float_value = 2;
+    string string_value = 3;
+    bool bool_value = 4;
+    IntArray int_array = 5;
+    FloatArray float_array = 6;
+  }
+}
+
+message GetTensorDataRequest {
+  string tensor_id = 1;
+  uint64 offset = 2;
+  uint64 size = 3;
+}
+
+message TensorDataChunk {
+  string tensor_id = 1;
+  uint64 offset = 2;
+  bytes data = 3;
+  uint64 total_size = 4;
+  bool is_last_chunk = 5;
+}
+
+message SetTensorDataResponse {
+  bool success = 1;
+  string error_message = 2;
+  uint64 bytes_written = 3;
+}
+
+// Tensor operation types
+enum TensorOpType {
+  TENSOR_OP_UNKNOWN = 0;
+  TENSOR_OP_ADD = 1;
+  TENSOR_OP_SUB = 2;
+  TENSOR_OP_MUL = 3;
+  TENSOR_OP_DIV = 4;
+  TENSOR_OP_MATMUL = 5;
+  TENSOR_OP_TRANSPOSE = 6;
+  TENSOR_OP_RESHAPE = 7;
+  TENSOR_OP_SLICE = 8;
+  TENSOR_OP_CONCAT = 9;
+  TENSOR_OP_REDUCE_SUM = 10;
+  TENSOR_OP_REDUCE_MEAN = 11;
+  TENSOR_OP_REDUCE_MAX = 12;
+  TENSOR_OP_REDUCE_MIN = 13;
+  TENSOR_OP_SIGMOID = 14;
+  TENSOR_OP_RELU = 15;
+  TENSOR_OP_TANH = 16;
+  TENSOR_OP_SOFTMAX = 17;
+  TENSOR_OP_CONV2D = 18;
+  TENSOR_OP_POOL2D = 19;
+  TENSOR_OP_BATCH_NORM = 20;
+  TENSOR_OP_DROPOUT = 21;
+}
+
+// Health and monitoring
+message HealthCheckRequest {}
+
+message HealthCheckResponse {
+  enum Status {
+    UNKNOWN = 0;
+    SERVING = 1;
+    NOT_SERVING = 2;
+    SERVICE_UNKNOWN = 3;
+  }
+  Status status = 1;
+  repeated DeviceInfo available_devices = 2;
+  uint64 server_uptime_seconds = 3;
+  string server_version = 4;
+}
+
+message GetServerStatsRequest {}
+
+message GetServerStatsResponse {
+  uint64 total_requests = 1;
+  uint64 active_connections = 2;
+  uint64 total_memory_allocated = 3;
+  uint64 total_tensors_created = 4;
+  repeated DeviceStats device_stats = 5;
+  double cpu_usage_percent = 6;
+  uint64 memory_usage_bytes = 7;
+}
+
+message DeviceStats {
+  int32 device_id = 1;
+  uint64 memory_used = 2;
+  uint64 memory_free = 3;
+  double utilization_percent = 4;
+  uint64 active_kernels = 5;
+  uint64 total_kernel_launches = 6;
+}

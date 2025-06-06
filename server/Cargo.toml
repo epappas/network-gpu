@@ -1,0 +1,40 @@
+[package]
+name = "networkgpu-server"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "server"
+path = "src/main.rs"
+
+[dependencies]
+networkgpu-proto = { path = "../proto" }
+tokio = { workspace = true }
+tonic = { workspace = true }
+prost = { workspace = true }
+serde = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+log = { workspace = true }
+env_logger = { workspace = true }
+uuid = { workspace = true }
+futures = { workspace = true }
+async-trait = { workspace = true }
+
+# CUDA bindings
+cuda-runtime-sys = "0.3.0-alpha.1"
+cudarc = { version = "0.16.4", features = ["cuda-11070"] }
+
+# Additional dependencies
+dashmap = "5.4"
+parking_lot = "0.12"
+bytes = "1.0"
+config = "0.13"
+clap = { version = "4.0", features = ["derive"] }
+tower = "0.4"
+hyper = "0.14"
+toml = "0.8"
+serde_json = "1.0"
+serde_yaml = "0.9"
+fastrand = "2.0"
+tokio-stream = "0.1"
