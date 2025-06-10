@@ -1,0 +1,25 @@
+[project]
+name = "network-gpu"
+version = "0.1.0"
+description = "Python + Rust GPU neural network bindings"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+dependencies = [
+    "torch>=2.5.0",
+    "numpy>=2.3.0",
+]
+
+[build-system]
+requires = ["maturin>=1.7.0"]
+build-backend = "maturin"
+
+[tool.maturin]
+python-source = "python"
+module-name = "network_gpu._network_gpu"
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.4.0",
+    "maturin>=1.7.0",
+]

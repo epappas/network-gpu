@@ -1,0 +1,9 @@
+[package]
+name = "tensor-ops"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+
+[dependencies]
+pyo3 = { version = "0.25", features = ["extension-module"] }
+numpy = "0.25"

@@ -1,0 +1,25 @@
+[workspace]
+members = [
+    "crates/tensor-ops",
+    "crates/neural-layers",
+]
+resolver = "2"
+
+[package]
+name = "network-gpu"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+
+[lib]
+name = "network_gpu"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.25", features = ["extension-module"] }
+numpy = "0.25"
+tensor-ops = { path = "crates/tensor-ops" }
+neural-layers = { path = "crates/neural-layers" }
+
+[build-dependencies]
+pyo3-build-config = "0.25"
